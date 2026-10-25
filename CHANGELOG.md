@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- Published to the VS Code Marketplace and Open VSX; icon.
+- Test Delivery sessions are no longer offered for continuing when they hit the limit themselves.
+
 ## 0.2.0
 
 - Delivers the prompt through the session's own messaging socket instead of typing it: no Accessibility

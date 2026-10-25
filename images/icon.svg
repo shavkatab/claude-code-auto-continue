@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E07A4F"/>
+      <stop offset="1" stop-color="#B8532E"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
+  <!-- reset arc: three quarters of a clock face, the gap is "the wait" -->
+  <path d="M128 52 A76 76 0 1 1 52 128" fill="none" stroke="#FFF7F2" stroke-width="18" stroke-linecap="round"/>
+  <path d="M128 30 L150 52 L128 74 Z" fill="#FFF7F2"/>
+  <!-- continue -->
+  <path d="M110 98 L166 128 L110 158 Z" fill="#FFF7F2" stroke="#FFF7F2" stroke-width="10" stroke-linejoin="round"/>
+</svg>

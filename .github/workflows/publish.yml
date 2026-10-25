@@ -1,0 +1,44 @@
+name: Publish
+
+# Runs when a GitHub release is published: builds the .vsix, publishes it to the
+# VS Code Marketplace and Open VSX, and attaches it to the release.
+# Needs repository secrets VSCE_PAT (Azure DevOps, Marketplace: Manage) and OVSX_PAT (open-vsx.org).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node --test
+      - name: Package
+        run: |
+          npx -y @vscode/vsce@3 package --no-dependencies -o extension.vsix
+          echo "VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
+      - name: VS Code Marketplace
+        run: npx -y @vscode/vsce@3 publish --packagePath extension.vsix
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      - name: Open VSX
+        run: |
+          npx -y ovsx@0 create-namespace shavkatab || echo "namespace already exists"
+          npx -y ovsx@0 publish extension.vsix
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        run: |
+          cp extension.vsix "claude-code-auto-continue-${VERSION}.vsix"
+          gh release upload "${{ github.event.release.tag_name }}" "claude-code-auto-continue-${VERSION}.vsix" --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}

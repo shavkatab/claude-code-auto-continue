@@ -7,6 +7,8 @@
 Claude Code stops there and waits. The limit comes back in a few hours (or days, for the weekly one), but the agent
 sits idle until somebody types `continue`. This VS Code extension does that for you — only in the sessions you choose.
 
+*Unofficial — not affiliated with or endorsed by Anthropic.*
+
 [Русская версия ниже ↓](#по-русски)
 
 ## What it does
@@ -23,12 +25,12 @@ sits idle until somebody types `continue`. This VS Code extension does that for 
 
 ## Install
 
-1. Download `claude-code-auto-continue-<version>.vsix` from [Releases](https://github.com/shavkatab/claude-code-auto-continue/releases).
-2. VS Code → Extensions → `…` → **Install from VSIX…**, or:
-   ```bash
-   code --install-extension claude-code-auto-continue-0.2.0.vsix
-   ```
-3. Run **Claude Auto-Continue: Test Delivery** (Cmd/Ctrl+Shift+P) once. It starts a throwaway `claude` session in
+1. VS Code → Extensions → search **Claude Code Auto-Continue** → **Install**
+   ([VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=shavkatab.claude-code-auto-continue);
+   Cursor, VSCodium and other editors: [Open VSX](https://open-vsx.org/extension/shavkatab/claude-code-auto-continue)).
+   Or download the `.vsix` from [Releases](https://github.com/shavkatab/claude-code-auto-continue/releases) →
+   Extensions → `…` → **Install from VSIX…**
+2. Run **Claude Auto-Continue: Test Delivery** (Cmd/Ctrl+Shift+P) once. It starts a throwaway `claude` session in
    a terminal, sends it a test prompt and tells you whether delivery works. It uses one short request.
 
 ## Usage
@@ -98,12 +100,15 @@ See [SPEC.md](SPEC.md) for the design and decisions (in Russian).
 - Через минуту после сброса отправляет сообщение в сессию и проверяет, что оно дошло.
 - Работает при заблокированном экране: ничего не печатается, сообщение уходит через внутренний канал сессии.
 
-**Установка:** скачайте `.vsix` из [Releases](https://github.com/shavkatab/claude-code-auto-continue/releases) →
-VS Code → Расширения → `…` → **Install from VSIX…**. Затем один раз выполните
+**Установка:** VS Code → Расширения → найдите **Claude Code Auto-Continue** → **Установить**
+(в Cursor и VSCodium — из Open VSX). Или скачайте `.vsix` из
+[Releases](https://github.com/shavkatab/claude-code-auto-continue/releases) → Расширения → `…` → **Install from VSIX…**. Затем один раз выполните
 **Claude Auto-Continue: Test Delivery** — она запустит тестовую сессию и проверит доставку.
 
 Если VS Code на русском, по умолчанию отправляется `продолжай`, иначе — `continue`. Текст меняется в настройке
 `claudeAutoContinue.message`.
+
+Неофициальное расширение, не связано с Anthropic.
 
 ## License
 

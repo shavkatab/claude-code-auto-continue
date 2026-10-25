@@ -3,3 +3,4 @@ test/**
 SPEC.md
 .gitignore
 *.vsix
+images/icon.svg
