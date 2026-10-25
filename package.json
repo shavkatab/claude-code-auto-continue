@@ -12,13 +12,26 @@
   "bugs": {
     "url": "https://github.com/shavkatab/claude-code-auto-continue/issues"
   },
-  "keywords": ["claude", "claude code", "anthropic", "usage limit", "rate limit", "continue", "resume"],
+  "keywords": [
+    "claude",
+    "claude code",
+    "anthropic",
+    "usage limit",
+    "rate limit",
+    "continue",
+    "resume"
+  ],
   "engines": {
     "vscode": "^1.90.0"
   },
-  "categories": ["Other", "AI"],
+  "categories": [
+    "Other",
+    "AI"
+  ],
   "main": "./src/extension.js",
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "scripts": {
     "test": "node --test",
     "status": "node src/cli.js status",
@@ -26,12 +39,36 @@
   },
   "contributes": {
     "commands": [
-      { "command": "claudeAutoContinue.menu", "title": "Menu", "category": "Claude Auto-Continue" },
-      { "command": "claudeAutoContinue.chooseSessions", "title": "Choose Sessions to Continue", "category": "Claude Auto-Continue" },
-      { "command": "claudeAutoContinue.sendNow", "title": "Send Now", "category": "Claude Auto-Continue" },
-      { "command": "claudeAutoContinue.testDelivery", "title": "Test Delivery", "category": "Claude Auto-Continue" },
-      { "command": "claudeAutoContinue.toggle", "title": "Turn On / Off", "category": "Claude Auto-Continue" },
-      { "command": "claudeAutoContinue.showLog", "title": "Show Log", "category": "Claude Auto-Continue" }
+      {
+        "command": "claudeAutoContinue.menu",
+        "title": "%command.menu%",
+        "category": "Claude Auto-Continue"
+      },
+      {
+        "command": "claudeAutoContinue.chooseSessions",
+        "title": "%command.chooseSessions%",
+        "category": "Claude Auto-Continue"
+      },
+      {
+        "command": "claudeAutoContinue.sendNow",
+        "title": "%command.sendNow%",
+        "category": "Claude Auto-Continue"
+      },
+      {
+        "command": "claudeAutoContinue.testDelivery",
+        "title": "%command.testDelivery%",
+        "category": "Claude Auto-Continue"
+      },
+      {
+        "command": "claudeAutoContinue.toggle",
+        "title": "%command.toggle%",
+        "category": "Claude Auto-Continue"
+      },
+      {
+        "command": "claudeAutoContinue.showLog",
+        "title": "%command.showLog%",
+        "category": "Claude Auto-Continue"
+      }
     ],
     "configuration": {
       "title": "Claude Code Auto-Continue",
@@ -48,7 +85,11 @@
         },
         "claudeAutoContinue.defaultChoice": {
           "type": "string",
-          "enum": ["ask", "always", "never"],
+          "enum": [
+            "ask",
+            "always",
+            "never"
+          ],
           "enumDescriptions": [
             "Ask for each session that hits the limit; nothing is sent until you say Continue.",
             "Continue every session that hits the limit without asking.",
