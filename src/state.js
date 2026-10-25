@@ -2,6 +2,7 @@
 //   handled/<uuid>  this limit event was continued (or given up on) — never touch it again
 //   choice/<uuid>   "yes" | "no": the user's answer to "continue after reset?"
 //   asked/<uuid>    the question was already shown once
+//   test/<session>  a throwaway session started by Test Delivery — never offered for continuing
 const fs = require('fs');
 const path = require('path');
 const { stateDir } = require('./paths');
@@ -43,7 +44,7 @@ function remove(kind, uuid) {
 }
 
 function prune(now = Date.now()) {
-  for (const kind of ['handled', 'choice', 'asked']) {
+  for (const kind of ['handled', 'choice', 'asked', 'test']) {
     const dir = path.join(stateDir(), kind);
     let names;
     try {
@@ -66,5 +67,7 @@ module.exports = {
   getChoice: (uuid) => read('choice', uuid),
   setChoice: (uuid, value) => write('choice', uuid, value),
   claimAsked: (uuid) => claim('asked', uuid),
+  markTestSession: (sessionId) => write('test', sessionId, new Date().toISOString()),
+  isTestSession: (sessionId) => fs.existsSync(file('test', sessionId)),
   prune,
 };

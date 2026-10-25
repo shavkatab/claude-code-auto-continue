@@ -71,6 +71,8 @@ sits idle until somebody types `continue`. This VS Code extension does that for 
   permission prompts. Approve it in the session, or set `"crossSessionInbound": "accept"` in Claude Code settings.
 - The messaging socket is an internal Claude Code mechanism and may change. The extension checks the protocol
   version and tells you when it doesn't match.
+- The agent sees the prompt as *“Another Claude session sent a message: continue”* — that is how Claude Code
+  labels messages that arrive through the socket.
 - *Test delivery* leaves one short test conversation in the project's Claude Code history.
 
 ## Development

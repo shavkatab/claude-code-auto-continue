@@ -21,6 +21,13 @@ test('choice defaults to undefined and remembers yes/no', () => {
   assert.equal(state.getChoice('e2'), 'no');
 });
 
+test('test sessions are remembered', () => {
+  tempClaudeDir();
+  assert.equal(state.isTestSession('s9'), false);
+  state.markTestSession('s9');
+  assert.equal(state.isTestSession('s9'), true);
+});
+
 test('asked is claimed once', () => {
   tempClaudeDir();
   assert.equal(state.claimAsked('e3'), true);

@@ -200,7 +200,7 @@ async function tick() {
     } else {
       const all = scan({ maxLateMs: c.maxLateMs, isDone: state.isHandled });
       const wins = windows.listWindows();
-      mine = all.filter((p) => windows.ownerPid(p.cwd, wins) === process.pid);
+      mine = all.filter((p) => windows.ownerPid(p.cwd, wins) === process.pid && !state.isTestSession(p.sessionId));
       for (const p of mine) {
         if (choiceOf(p) === undefined && state.claimAsked(p.uuid)) ask(p);
       }
@@ -270,6 +270,8 @@ async function testDelivery() {
     info('test: no session registered');
     return vscode.window.showErrorMessage(t('testNoSession'));
   }
+  // It may hit the usage limit itself; it must not then be offered for continuing.
+  state.markTestSession(live.sessionId);
   await sleep(3000); // let the UI settle
   try {
     let file = findTranscript(live.sessionId);
