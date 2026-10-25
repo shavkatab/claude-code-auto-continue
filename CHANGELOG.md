@@ -2,7 +2,7 @@
 
 ## 0.2.1
 
-- Published to the VS Code Marketplace and Open VSX; icon.
+- Icon; the release workflow builds the .vsix and attaches it to the GitHub release.
 - Test Delivery sessions are no longer offered for continuing when they hit the limit themselves.
 
 ## 0.2.0
