@@ -17,7 +17,9 @@ sits idle until somebody types `continue`. This VS Code extension does that for 
 - The status bar counts down: `⌚ Claude: "continue" in 2h 55m`. Click it to change your choice, send now, or test delivery.
 - A minute after the reset it sends the prompt to the session and checks that it arrived.
 - Works with the **screen locked** and VS Code in the background — nothing is typed; see *How it works*.
-- macOS, Windows and Linux. No dependencies, nothing leaves your computer.
+- macOS and Linux; Windows support is written and unit-tested but not yet confirmed on a real machine —
+  please run *Test Delivery* and [open an issue](https://github.com/shavkatab/claude-code-auto-continue/issues) with the result.
+- No dependencies, nothing leaves your computer.
 
 ## Install
 
