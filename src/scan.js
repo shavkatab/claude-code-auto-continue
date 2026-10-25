@@ -124,4 +124,40 @@ function findTranscript(sessionId) {
   return undefined;
 }
 
-module.exports = { scan, pendingFromTranscript, findTranscript, ENTRYPOINTS };
+const titleCache = new Map(); // file -> { mtimeMs, title }
+
+// The session's name as Claude Code shows it: the user's rename wins over the generated title.
+function titleFromTranscript(text) {
+  let custom;
+  let ai;
+  for (const line of text.split('\n')) {
+    if (!line.includes('-title"')) continue;
+    try {
+      const d = JSON.parse(line);
+      if (d.type === 'custom-title' && d.customTitle) custom = d.customTitle;
+      if (d.type === 'ai-title' && d.aiTitle) ai = d.aiTitle;
+    } catch {}
+  }
+  return custom ?? ai;
+}
+
+function sessionTitle(sessionId) {
+  const file = findTranscript(sessionId);
+  if (!file) return undefined;
+  let st;
+  try {
+    st = fs.statSync(file);
+  } catch {
+    return undefined;
+  }
+  const hit = titleCache.get(file);
+  if (hit && hit.mtimeMs === st.mtimeMs) return hit.title;
+  let title;
+  try {
+    title = titleFromTranscript(readTail(file, st.size));
+  } catch {}
+  titleCache.set(file, { mtimeMs: st.mtimeMs, title });
+  return title;
+}
+
+module.exports = { scan, pendingFromTranscript, findTranscript, sessionTitle, titleFromTranscript, ENTRYPOINTS };

@@ -1,6 +1,6 @@
 {
   "command.menu": "Меню",
-  "command.chooseSessions": "Выбрать сессии для продолжения",
+  "command.chooseSessions": "Выбрать сессии для автопродолжения",
   "command.sendNow": "Отправить сейчас",
   "command.testDelivery": "Проверить доставку",
   "command.toggle": "Включить / выключить",

@@ -19,7 +19,7 @@ async function main([cmd, id, ...rest]) {
           p.limitType || '-',
           p.entrypoint,
           live ? `live pid ${live.pid}` : 'not running',
-          `choice=${state.getChoice(p.uuid) || '-'}`,
+          `choice=${state.getSessionChoice(p.sessionId) || '-'}`,
           p.sessionId,
           p.cwd,
         ].join('  '),

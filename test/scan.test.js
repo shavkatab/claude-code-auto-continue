@@ -3,7 +3,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
 const { tempClaudeDir, line, limitEntry, reply, userMsg } = require('./helpers');
-const { pendingFromTranscript, scan } = require('../src/scan');
+const { pendingFromTranscript, scan, titleFromTranscript } = require('../src/scan');
 
 const RESET = 1792911000 * 1000;
 const jsonl = (...entries) => entries.map(line).join('\n');
@@ -57,4 +57,13 @@ test('scan filters by entrypoint, lateness and handled events', () => {
   assert.deepEqual(ids, ['cli', 'vscode']);
 
   assert.deepEqual(scan({ now: RESET + 13 * 3600 * 1000 }), [], 'older than maxLateHours is ignored');
+});
+
+test('the session title prefers the user rename over the generated one', () => {
+  assert.equal(titleFromTranscript(jsonl({ type: 'ai-title', aiTitle: 'Generated' })), 'Generated');
+  assert.equal(
+    titleFromTranscript(jsonl({ type: 'ai-title', aiTitle: 'Generated' }, { type: 'custom-title', customTitle: 'Mine' })),
+    'Mine',
+  );
+  assert.equal(titleFromTranscript(jsonl(limitEntry())), undefined);
 });

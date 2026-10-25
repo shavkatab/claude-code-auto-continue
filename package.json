@@ -2,7 +2,7 @@
   "name": "claude-code-auto-continue",
   "displayName": "Claude Code Auto-Continue",
   "description": "Unofficial. Continues the Claude Code sessions you pick as soon as the usage limit resets — no more coming back hours later to type \"continue\".",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "shavkatab",
   "icon": "images/icon.png",
   "galleryBanner": {
@@ -103,12 +103,12 @@
             "never"
           ],
           "enumDescriptions": [
-            "Ask for each session that hits the limit; nothing is sent until you say Continue.",
+            "Ask once per session when it first hits the limit; the answer stands until you change it.",
             "Continue every session that hits the limit without asking.",
-            "Never continue automatically; only Send Now."
+            "Never continue automatically; only Send Now or sessions you tick yourself."
           ],
           "default": "ask",
-          "description": "What to do with a session that hits the limit before you choose."
+          "description": "What to do with a session you haven't chosen yet when it hits the limit."
         },
         "claudeAutoContinue.delaySeconds": {
           "type": "number",

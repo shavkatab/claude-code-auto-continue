@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+- A choice now belongs to the session: chosen once, it is continued after every limit reset until you untick it.
+  Choices made per limit in 0.3.0 are carried over.
+- The chooser lists running sessions too, with their titles, so you can pick them before they hit a limit.
+- Usage reads `5h/20% - wk/30%`; after a reset without newer numbers it shows `~0%` instead of `—`.
+
 ## 0.3.0
 
 - Status bar shows how much of the 5-hour and weekly plan limits is used (from Claude Code's own cache in

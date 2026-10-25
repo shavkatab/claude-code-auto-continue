@@ -14,9 +14,10 @@ sits idle until somebody types `continue`. This VS Code extension does that for 
 ## What it does
 
 - Watches every Claude Code session on your machine — the **VS Code panel**, the **terminal** (`claude`) and **Claude Desktop**.
-- When one hits the 5-hour or weekly limit, it asks: *“Send ‘continue’ after the reset?”* — **Continue / No**.
-  Nothing is sent to a session you didn't choose.
-- The status bar shows how much of your **5-hour and weekly limits** is used — `5h 64% · week 36%` — and turns
+- **Choose a session once** — it keeps getting continued after every limit reset until you untick it. Tick
+  sessions in advance from the status bar list (running ones are listed too), or answer **Yes, always** when a
+  session hits the limit for the first time. Nothing is sent to a session you didn't choose.
+- The status bar shows how much of your **5-hour and weekly limits** is used — `5h/64% - wk/36%` — and turns
   yellow at 75%, red at 90%.
 - The status bar counts down: `⌚ Claude: "continue" in 2h 55m`. Click it to change your choice, send now, or test delivery.
 - A minute after the reset it sends the prompt to the session and checks that it arrived.
@@ -39,7 +40,7 @@ sits idle until somebody types `continue`. This VS Code extension does that for 
 
 | | |
 |---|---|
-| Status bar → **Choose sessions to continue** | Tick the sessions that should get the prompt after the reset |
+| Status bar → **Choose sessions to keep continuing** | Tick sessions (running or stopped); they get the prompt after every reset until you untick them |
 | **Send now** | Send the prompt to one session right away |
 | **Test delivery** | Check that everything works on this machine |
 | Settings → `claudeAutoContinue.*` | See below |
@@ -66,12 +67,13 @@ sits idle until somebody types `continue`. This VS Code extension does that for 
    key file in `~/.claude/sessions/`. On macOS/Linux the socket directory is private to your user, so no token is read.
 3. **If the session is closed:** a VS Code panel session is reopened, a terminal session is resumed with
    `claude --resume <id>` in a VS Code terminal, a Claude Desktop session gets a notification (it can't be opened from outside).
-4. **Exactly once.** Choices and "already continued" marks live in `~/.claude/auto-continue/`, shared by all
+4. **Exactly once per limit.** Choices (per session) and "already continued" marks (per limit) live in `~/.claude/auto-continue/`, shared by all
    VS Code windows. Each session is handled by one window: the one whose folder contains it.
 
 5. **Usage percentages.** Claude Code caches the plan usage it gets from the server in `~/.claude.json`
    (`cachedUsageUtilization`). The extension reads only that entry; it never touches your credentials or the
-   network. The numbers are as fresh as Claude Code's last check — the tooltip says when that was.
+   network. The numbers are as fresh as Claude Code's last check — the tooltip says when that was. Once a
+   window has reset and Claude Code hasn't checked again, it shows `~0%`: the new window started at zero.
 
 ### Limitations
 
@@ -99,9 +101,10 @@ npm run package          # build the .vsix
 **Claude Code упёрся в лимит? Отметьте нужные сессии и уходите — они продолжат сами, как только лимит сбросится.**
 
 - Следит за всеми сессиями Claude Code: панель VS Code, терминал (`claude`), Claude Desktop.
-- Когда сессия упирается в 5-часовой или недельный лимит, спрашивает: «Отправить „продолжай“ после сброса?» —
-  **Продолжить / Нет**. В сессии, которые вы не выбрали, ничего не отправляется.
-- В строке состояния видно, сколько использовано **5-часового и недельного лимита** (`5ч 64% · нед 36%`):
+- **Сессию выбираете один раз** — она продолжается после каждого сброса лимита, пока вы не снимете отметку.
+  Отметить можно заранее, в списке по клику на строку состояния (там и работающие сессии), или ответить
+  **Да, всегда**, когда сессия впервые упрётся в лимит. В невыбранные сессии ничего не отправляется.
+- В строке состояния видно, сколько использовано **5-часового и недельного лимита** (`5ч/64% - нед/36%`):
   жёлтым от 75%, красным от 90%. Цифры берутся из `~/.claude.json`, куда их сохраняет сам Claude Code.
 - В строке состояния обратный отсчёт; по клику — выбрать сессии, отправить сейчас, проверить доставку.
 - Через минуту после сброса отправляет сообщение в сессию и проверяет, что оно дошло.

@@ -21,9 +21,9 @@ test('reads the 5-hour and weekly windows', () => {
   assert.equal(u.fetchedAt, NOW - 60000);
 });
 
-test('a window whose reset already passed is unknown, not stale', () => {
+test('after the reset the old percent is replaced by an approximate 0', () => {
   const u = parseUsage(config({ five_hour: { utilization: 100, resets_at: '2026-10-25T04:00:00Z' } }), NOW);
-  assert.equal(u.fiveHour, null);
+  assert.deepEqual(u.fiveHour, { percent: 0, resetsAt: null, approx: true, resetAt: Date.parse('2026-10-25T04:00:00Z') });
 });
 
 test('falls back to the limits list', () => {

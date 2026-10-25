@@ -5,12 +5,13 @@ const { globalConfigFile } = require('./paths');
 
 let cache = { mtimeMs: -1, value: null };
 
-// { percent, resetsAt } for one window, or null. A window whose reset already passed is
-// reported as null: the cached percent no longer means anything until Claude Code refreshes.
+// { percent, resetsAt, approx?, resetAt? } for one window, or null. When the reset already passed,
+// the cached percent is from the old window; the new one started at 0, so 0 is the best lower
+// bound until Claude Code refreshes — marked approx, with the time it reset.
 function windowOf(raw, now) {
   if (!raw || typeof raw.utilization !== 'number' || !Number.isFinite(raw.utilization)) return null;
   const resetsAt = raw.resets_at ? Date.parse(raw.resets_at) : NaN;
-  if (Number.isFinite(resetsAt) && resetsAt <= now) return null;
+  if (Number.isFinite(resetsAt) && resetsAt <= now) return { percent: 0, resetsAt: null, approx: true, resetAt: resetsAt };
   return { percent: Math.round(raw.utilization), resetsAt: Number.isFinite(resetsAt) ? resetsAt : null };
 }
 

@@ -1,7 +1,7 @@
 const vscode = require('vscode');
 const cp = require('child_process');
 const path = require('path');
-const { scan, findTranscript } = require('./scan');
+const { scan, findTranscript, sessionTitle, ENTRYPOINTS } = require('./scan');
 const state = require('./state');
 const sessions = require('./sessions');
 const windows = require('./windows');
@@ -19,6 +19,7 @@ let log;
 let statusItem;
 let usageItem;
 let mine = []; // waiting sessions this window speaks for
+let chosenMine = []; // sessions of this window that keep getting continued (choice "yes")
 let busy = false;
 let keepAwake = null;
 
@@ -45,13 +46,20 @@ function name(p) {
   return path.basename(p.cwd || '') || p.sessionId.slice(0, 8);
 }
 
+// Project plus the session title, so several sessions of one project can be told apart.
+function label(p) {
+  const title = sessionTitle(p.sessionId);
+  return title ? `${name(p)} — ${title}` : name(p);
+}
+
 function source(p) {
   return { 'claude-vscode': 'VS Code', cli: 'terminal', 'claude-desktop': 'Desktop' }[p.entrypoint] || p.entrypoint;
 }
 
-// "yes" | "no" | undefined (not decided yet)
+// "yes" | "no" | undefined (not decided yet). The choice belongs to the session and stands
+// across every limit it hits until the user changes it.
 function choiceOf(p) {
-  const saved = state.getChoice(p.uuid);
+  const saved = state.getSessionChoice(p.sessionId);
   if (saved) return saved;
   const d = cfg().defaultChoice;
   return d === 'always' ? 'yes' : d === 'never' ? 'no' : undefined;
@@ -69,8 +77,14 @@ function updateStatus() {
     statusItem.text = t('statusOff');
     statusItem.tooltip = t('tooltipOff');
   } else if (!mine.length) {
-    statusItem.text = t('statusIdle');
-    statusItem.tooltip = t('tooltipIdle');
+    statusItem.text = chosenMine.length ? t('statusChosen', chosenMine.length) : t('statusIdle');
+    const md = new vscode.MarkdownString(`${t('tooltipIdle')}\n\n`);
+    if (chosenMine.length) {
+      md.appendMarkdown(`${t('tooltipChosen')}\n\n`);
+      for (const p of chosenMine) md.appendMarkdown(`- ${label(p)} (${source(p)})\n`);
+    }
+    md.appendMarkdown(`\n${t('tooltipClick')}`);
+    statusItem.tooltip = md;
   } else {
     const armed = mine.filter((p) => choiceOf(p) === 'yes');
     const undecided = mine.filter((p) => choiceOf(p) === undefined);
@@ -85,7 +99,7 @@ function updateStatus() {
       if (undecided.length) statusItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
     }
     const md = new vscode.MarkdownString(`${t('tooltipHeader')}\n\n`);
-    for (const p of mine) md.appendMarkdown(`${t('tooltipRow', mark(p), name(p), source(p), formatWhen(p.resetAt))}\n`);
+    for (const p of mine) md.appendMarkdown(`${t('tooltipRow', mark(p), label(p), source(p), formatWhen(p.resetAt))}\n`);
     md.appendMarkdown(`\n${t('tooltipClick')}`);
     statusItem.tooltip = md;
   }
@@ -95,7 +109,7 @@ function updateStatus() {
 function updateUsage() {
   const usage = cfg().showUsage ? readUsage() : null;
   if (!usage) return usageItem.hide();
-  const pct = (w) => (w ? `${w.percent}%` : '—');
+  const pct = (w) => (w ? `${w.approx ? '~' : ''}${w.percent}%` : '—');
   usageItem.text = t('usageText', pct(usage.fiveHour), pct(usage.sevenDay));
 
   const top = Math.max(usage.fiveHour?.percent ?? 0, usage.sevenDay?.percent ?? 0);
@@ -106,10 +120,13 @@ function updateUsage() {
         ? new vscode.ThemeColor('statusBarItem.warningBackground')
         : undefined;
 
-  const row = (key, w) =>
-    t(key, w ? `${w.percent}%` : t('usageTooltipUnknown'), w?.resetsAt ? formatWhen(w.resetsAt) : '—');
+  const row = (key, nameKey, w) => {
+    if (!w) return t(key, '—', '—');
+    if (w.approx) return t('usageTooltipApprox', t(nameKey), formatWhen(w.resetAt));
+    return t(key, `${w.percent}%`, w.resetsAt ? formatWhen(w.resetsAt) : '—');
+  };
   const md = new vscode.MarkdownString(
-    `${row('usageTooltipFive', usage.fiveHour)}\n\n${row('usageTooltipWeek', usage.sevenDay)}\n\n`,
+    `${row('usageTooltipFive', 'usageFiveName', usage.fiveHour)}\n\n${row('usageTooltipWeek', 'usageWeekName', usage.sevenDay)}\n\n`,
   );
   if (usage.fetchedAt) {
     const age = Date.now() - usage.fetchedAt;
@@ -151,11 +168,12 @@ function updateKeepAwake() {
 function ask(p) {
   const c = cfg();
   info(`${name(p)}: hit the ${p.limitType || 'usage'} limit, resets ${formatWhen(p.resetAt)} — asking`);
+  const where = { cwd: p.cwd, entrypoint: p.entrypoint };
   vscode.window
-    .showInformationMessage(t('ask', name(p), source(p), formatWhen(p.resetAt), c.message), t('yes'), t('no'))
+    .showInformationMessage(t('ask', label(p), source(p), formatWhen(p.resetAt), c.message), t('yes'), t('no'))
     .then((answer) => {
-      if (answer === t('yes')) state.setChoice(p.uuid, 'yes');
-      if (answer === t('no')) state.setChoice(p.uuid, 'no');
+      if (answer === t('yes')) state.setSessionChoice(p.sessionId, 'yes', where);
+      if (answer === t('no')) state.setSessionChoice(p.sessionId, 'no', where);
       if (answer) info(`${name(p)}: ${answer === t('yes') ? 'will continue' : 'will not continue'}`);
       tick();
     });
@@ -234,9 +252,10 @@ async function tick() {
       const wins = windows.listWindows();
       mine = all.filter((p) => windows.ownerPid(p.cwd, wins) === process.pid && !state.isTestSession(p.sessionId));
       for (const p of mine) {
-        if (choiceOf(p) === undefined && state.claimAsked(p.uuid)) ask(p);
+        if (choiceOf(p) === undefined && state.claimAsked(p.sessionId)) ask(p);
       }
     }
+    chosenMine = c.enabled ? candidates().filter((p) => choiceOf(p) === 'yes') : [];
     updateStatus();
     updateUsage();
     updateKeepAwake();
@@ -250,21 +269,55 @@ async function tick() {
   }
 }
 
+// Every session this window can offer for choosing: stopped on a limit, running, or chosen earlier.
+function candidates() {
+  const wins = windows.listWindows();
+  const owned = (s) => s.cwd && windows.ownerPid(s.cwd, wins) === process.pid && !state.isTestSession(s.sessionId);
+  const bySession = new Map();
+  for (const p of mine) bySession.set(p.sessionId, { ...p, status: 'waiting' });
+  for (const s of sessions.listLive()) {
+    if (!ENTRYPOINTS.has(s.entrypoint) || (s.kind ?? 'interactive') !== 'interactive') continue;
+    if (bySession.has(s.sessionId) || !owned(s)) continue;
+    bySession.set(s.sessionId, { sessionId: s.sessionId, cwd: s.cwd, entrypoint: s.entrypoint, startedAt: s.startedAt, status: 'live' });
+  }
+  for (const s of state.listSessionChoices()) {
+    if (s.choice !== 'yes' || bySession.has(s.sessionId) || !owned(s)) continue;
+    bySession.set(s.sessionId, { ...s, status: 'stopped' });
+  }
+  return [...bySession.values()];
+}
+
 async function chooseSessions() {
-  if (!mine.length) return vscode.window.showInformationMessage(t('noneWaiting'));
+  const list = candidates();
+  if (!list.length) return vscode.window.showInformationMessage(t('noSessions'));
   const c = cfg();
-  const items = mine.map((p) => ({
-    label: name(p),
-    description: `${source(p)} · ${t('resets', formatWhen(p.resetAt))} · ${t('in', formatLeft(p.resetAt + c.delayMs - Date.now()))}`,
-    detail: p.text,
+  const order = { waiting: 0, live: 1, stopped: 2 };
+  list.sort((a, b) => order[a.status] - order[b.status] || (b.startedAt || 0) - (a.startedAt || 0));
+  const items = list.map((p) => ({
+    label: sessionTitle(p.sessionId) || name(p),
+    description: `${name(p)} · ${source(p)}`,
+    detail:
+      p.status === 'waiting'
+        ? t('detailWaiting', formatWhen(p.resetAt))
+        : t(p.status === 'live' ? 'detailLive' : 'detailStopped'),
     picked: choiceOf(p) === 'yes',
     p,
   }));
-  const picked = await vscode.window.showQuickPick(items, { canPickMany: true, title: t('pickTitle', c.message) });
+  const picked = await vscode.window.showQuickPick(items, {
+    canPickMany: true,
+    matchOnDescription: true,
+    title: t('pickTitle', c.message),
+  });
   if (!picked) return;
-  const yes = new Set(picked.map((i) => i.p.uuid));
-  for (const p of mine) state.setChoice(p.uuid, yes.has(p.uuid) ? 'yes' : 'no');
-  info(`choice: ${mine.map((p) => `${name(p)}=${yes.has(p.uuid) ? 'yes' : 'no'}`).join(', ')}`);
+  const yes = new Set(picked.map((i) => i.p.sessionId));
+  for (const { p } of items) {
+    const where = { cwd: p.cwd, entrypoint: p.entrypoint };
+    // Unticking a chosen session cancels it; a running one never chosen stays undecided,
+    // so it is still asked about when it hits a limit.
+    if (yes.has(p.sessionId)) state.setSessionChoice(p.sessionId, 'yes', where);
+    else if (choiceOf(p) === 'yes' || p.status === 'waiting') state.setSessionChoice(p.sessionId, 'no', where);
+  }
+  info(`choice: ${items.map(({ p }) => `${name(p)}/${p.sessionId.slice(0, 8)}=${yes.has(p.sessionId) ? 'yes' : '-'}`).join(', ')}`);
   tick();
 }
 
@@ -272,11 +325,10 @@ async function sendNow() {
   if (!mine.length) return vscode.window.showInformationMessage(t('noneWaiting'));
   const c = cfg();
   const item = await vscode.window.showQuickPick(
-    mine.map((p) => ({ label: name(p), description: `${source(p)} · ${t('resets', formatWhen(p.resetAt))}`, p })),
+    mine.map((p) => ({ label: label(p), description: `${source(p)} · ${t('resets', formatWhen(p.resetAt))}`, p })),
     { title: t('pickNow', c.message) },
   );
   if (!item) return;
-  state.setChoice(item.p.uuid, 'yes');
   await continueSession(item.p, { manual: true });
 }
 
@@ -379,6 +431,7 @@ function activate(context) {
     },
   });
 
+  state.migrateEventChoices();
   state.prune();
   info(`started (pid ${process.pid})`);
   tick();
