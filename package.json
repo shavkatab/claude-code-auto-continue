@@ -2,7 +2,7 @@
   "name": "claude-code-auto-continue",
   "displayName": "Claude Code Auto-Continue",
   "description": "Unofficial. Continues the Claude Code sessions you pick as soon as the usage limit resets — no more coming back hours later to type \"continue\".",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "publisher": "shavkatab",
   "icon": "images/icon.png",
   "galleryBanner": {
@@ -84,6 +84,11 @@
           "type": "boolean",
           "default": true,
           "description": "Watch Claude Code sessions for usage limits and continue the chosen ones after the reset."
+        },
+        "claudeAutoContinue.showUsage": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show how much of the 5-hour and weekly Claude plan limits is used, as Claude Code last saw it (read from `~/.claude.json`, no network)."
         },
         "claudeAutoContinue.message": {
           "type": "string",

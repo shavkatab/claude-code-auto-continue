@@ -6,15 +6,18 @@ const state = require('./state');
 const sessions = require('./sessions');
 const windows = require('./windows');
 const { sendToSocket, waitForTranscript, fileSize } = require('./deliver');
+const { readUsage } = require('./usage');
 const { t, setLanguage, formatLeft, formatWhen } = require('./i18n');
 
 const TICK_MS = 15 * 1000;
 const REOPEN_TIMEOUT_MS = 45 * 1000;
 const TEST_START_TIMEOUT_MS = 60 * 1000;
+const USAGE_STALE_MS = 2 * 3600 * 1000;
 const startedAt = Date.now();
 
 let log;
 let statusItem;
+let usageItem;
 let mine = []; // waiting sessions this window speaks for
 let busy = false;
 let keepAwake = null;
@@ -26,6 +29,7 @@ function cfg() {
     message: c.get('message', '').trim() || t('defaultMessage'),
     delayMs: c.get('delaySeconds', 60) * 1000,
     defaultChoice: c.get('defaultChoice', 'ask'),
+    showUsage: c.get('showUsage', true),
     keepAwake: c.get('keepAwake', true),
     maxLateMs: c.get('maxLateHours', 12) * 3600 * 1000,
   };
@@ -86,6 +90,34 @@ function updateStatus() {
     statusItem.tooltip = md;
   }
   statusItem.show();
+}
+
+function updateUsage() {
+  const usage = cfg().showUsage ? readUsage() : null;
+  if (!usage) return usageItem.hide();
+  const pct = (w) => (w ? `${w.percent}%` : '—');
+  usageItem.text = t('usageText', pct(usage.fiveHour), pct(usage.sevenDay));
+
+  const top = Math.max(usage.fiveHour?.percent ?? 0, usage.sevenDay?.percent ?? 0);
+  usageItem.backgroundColor =
+    top >= 90
+      ? new vscode.ThemeColor('statusBarItem.errorBackground')
+      : top >= 75
+        ? new vscode.ThemeColor('statusBarItem.warningBackground')
+        : undefined;
+
+  const row = (key, w) =>
+    t(key, w ? `${w.percent}%` : t('usageTooltipUnknown'), w?.resetsAt ? formatWhen(w.resetsAt) : '—');
+  const md = new vscode.MarkdownString(
+    `${row('usageTooltipFive', usage.fiveHour)}\n\n${row('usageTooltipWeek', usage.sevenDay)}\n\n`,
+  );
+  if (usage.fetchedAt) {
+    const age = Date.now() - usage.fetchedAt;
+    md.appendMarkdown(t('usageTooltipFetched', formatWhen(usage.fetchedAt), formatLeft(age)));
+    if (age > USAGE_STALE_MS) md.appendMarkdown(` ${t('usageTooltipStale')}`);
+  }
+  usageItem.tooltip = md;
+  usageItem.show();
 }
 
 // Keeps the computer from sleeping while a session is armed. The screen may still lock:
@@ -206,6 +238,7 @@ async function tick() {
       }
     }
     updateStatus();
+    updateUsage();
     updateKeepAwake();
     for (const p of mine) {
       if (choiceOf(p) === 'yes' && Date.now() >= p.resetAt + c.delayMs) await continueSession(p);
@@ -318,10 +351,15 @@ function activate(context) {
   statusItem = vscode.window.createStatusBarItem('claudeAutoContinue.status', vscode.StatusBarAlignment.Right, 1000);
   statusItem.name = 'Claude Code Auto-Continue';
   statusItem.command = 'claudeAutoContinue.menu';
+  // Higher priority sits further left, so usage shows just before the auto-continue item.
+  usageItem = vscode.window.createStatusBarItem('claudeAutoContinue.usage', vscode.StatusBarAlignment.Right, 1001);
+  usageItem.name = 'Claude Code usage';
+  usageItem.command = 'claudeAutoContinue.menu';
 
   context.subscriptions.push(
     log,
     statusItem,
+    usageItem,
     vscode.commands.registerCommand('claudeAutoContinue.menu', menu),
     vscode.commands.registerCommand('claudeAutoContinue.chooseSessions', chooseSessions),
     vscode.commands.registerCommand('claudeAutoContinue.sendNow', sendNow),

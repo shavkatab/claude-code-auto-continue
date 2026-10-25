@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0
+
+- Status bar shows how much of the 5-hour and weekly plan limits is used (from Claude Code's own cache in
+  `~/.claude.json`; no credentials, no network). Setting `claudeAutoContinue.showUsage`.
+
 ## 0.2.1
 
 - Icon; the release workflow builds the .vsix and attaches it to the GitHub release.

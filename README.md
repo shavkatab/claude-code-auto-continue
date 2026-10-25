@@ -16,6 +16,8 @@ sits idle until somebody types `continue`. This VS Code extension does that for 
 - Watches every Claude Code session on your machine — the **VS Code panel**, the **terminal** (`claude`) and **Claude Desktop**.
 - When one hits the 5-hour or weekly limit, it asks: *“Send ‘continue’ after the reset?”* — **Continue / No**.
   Nothing is sent to a session you didn't choose.
+- The status bar shows how much of your **5-hour and weekly limits** is used — `5h 64% · week 36%` — and turns
+  yellow at 75%, red at 90%.
 - The status bar counts down: `⌚ Claude: "continue" in 2h 55m`. Click it to change your choice, send now, or test delivery.
 - A minute after the reset it sends the prompt to the session and checks that it arrived.
 - Works with the **screen locked** and VS Code in the background — nothing is typed; see *How it works*.
@@ -28,7 +30,7 @@ sits idle until somebody types `continue`. This VS Code extension does that for 
 1. Download `claude-code-auto-continue-<version>.vsix` from [Releases](https://github.com/shavkatab/claude-code-auto-continue/releases).
 2. VS Code (or Cursor, VSCodium) → Extensions → `…` → **Install from VSIX…**, or:
    ```bash
-   code --install-extension claude-code-auto-continue-0.2.1.vsix
+   code --install-extension claude-code-auto-continue-0.3.0.vsix
    ```
 3. Run **Claude Auto-Continue: Test Delivery** (Cmd/Ctrl+Shift+P) once. It starts a throwaway `claude` session in
    a terminal, sends it a test prompt and tells you whether delivery works. It uses one short request.
@@ -44,6 +46,7 @@ sits idle until somebody types `continue`. This VS Code extension does that for 
 
 | Setting | Default | |
 |---|---|---|
+| `showUsage` | `true` | Show 5-hour and weekly usage in the status bar |
 | `message` | `continue` (`продолжай` in Russian VS Code) | The prompt to send |
 | `defaultChoice` | `ask` | `ask` — ask per session · `always` — continue all · `never` — only manual |
 | `delaySeconds` | `60` | Wait after the reset time |
@@ -65,6 +68,10 @@ sits idle until somebody types `continue`. This VS Code extension does that for 
    `claude --resume <id>` in a VS Code terminal, a Claude Desktop session gets a notification (it can't be opened from outside).
 4. **Exactly once.** Choices and "already continued" marks live in `~/.claude/auto-continue/`, shared by all
    VS Code windows. Each session is handled by one window: the one whose folder contains it.
+
+5. **Usage percentages.** Claude Code caches the plan usage it gets from the server in `~/.claude.json`
+   (`cachedUsageUtilization`). The extension reads only that entry; it never touches your credentials or the
+   network. The numbers are as fresh as Claude Code's last check — the tooltip says when that was.
 
 ### Limitations
 
@@ -94,6 +101,8 @@ npm run package          # build the .vsix
 - Следит за всеми сессиями Claude Code: панель VS Code, терминал (`claude`), Claude Desktop.
 - Когда сессия упирается в 5-часовой или недельный лимит, спрашивает: «Отправить „продолжай“ после сброса?» —
   **Продолжить / Нет**. В сессии, которые вы не выбрали, ничего не отправляется.
+- В строке состояния видно, сколько использовано **5-часового и недельного лимита** (`5ч 64% · нед 36%`):
+  жёлтым от 75%, красным от 90%. Цифры берутся из `~/.claude.json`, куда их сохраняет сам Claude Code.
 - В строке состояния обратный отсчёт; по клику — выбрать сессии, отправить сейчас, проверить доставку.
 - Через минуту после сброса отправляет сообщение в сессию и проверяет, что оно дошло.
 - Работает при заблокированном экране: ничего не печатается, сообщение уходит через внутренний канал сессии.
