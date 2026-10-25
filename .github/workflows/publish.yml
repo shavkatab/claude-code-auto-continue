@@ -1,7 +1,6 @@
 name: Publish
 
 # Runs when a GitHub release is published: builds the .vsix and attaches it to the release.
-# If the repository secret OVSX_PAT (open-vsx.org token) is set, also publishes to Open VSX.
 
 on:
   release:
@@ -14,8 +13,6 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    env:
-      OVSX_PAT: ${{ secrets.OVSX_PAT }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,11 +23,6 @@ jobs:
         run: |
           npx -y @vscode/vsce@3 package --no-dependencies -o extension.vsix
           echo "VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
-      - name: Open VSX
-        if: env.OVSX_PAT != ''
-        run: |
-          npx -y ovsx@0 create-namespace shavkatab || echo "namespace already exists"
-          npx -y ovsx@0 publish extension.vsix
       - name: Attach to the release
         if: github.event_name == 'release'
         run: |
