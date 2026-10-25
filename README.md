@@ -85,8 +85,6 @@ node src/cli.js status   # which sessions are waiting, without VS Code
 npm run package          # build the .vsix
 ```
 
-See [SPEC.md](SPEC.md) for the design and decisions (in Russian).
-
 ---
 
 ## По-русски
